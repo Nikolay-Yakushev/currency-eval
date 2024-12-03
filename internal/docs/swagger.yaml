@@ -1,0 +1,102 @@
+definitions:
+  dto.RequestCurrencyByDateDTO:
+    properties:
+      baseCurrency:
+        type: string
+      effectiveDate:
+        type: string
+    type: object
+  dto.RequestCurrencyPairDTO:
+    properties:
+      baseCurrency:
+        description: relative to which currency rates should be calculated
+        type: string
+      targetCurrency:
+        type: string
+    type: object
+  dto.ResponseCurrencyByDateDTO:
+    properties:
+      baseCurrency:
+        type: string
+      baseCurrencyValue:
+        type: number
+      currencies:
+        additionalProperties:
+          type: number
+        description: '{EUR: 1.23} // value relative to BaseCurrency value'
+        type: object
+      updatedAt:
+        type: string
+    type: object
+  dto.ResponseCurrencyPairDTO:
+    properties:
+      baseCurrency:
+        type: string
+      baseCurrencyValue:
+        type: number
+      targetCurrency:
+        type: string
+      targetCurrencyValue:
+        type: number
+      updateAt:
+        type: string
+    type: object
+info:
+  contact: {}
+  title: Currency API
+  version: "1.0"
+paths:
+  /currencies:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Request body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.RequestCurrencyPairDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.ResponseCurrencyPairDTO'
+      tags:
+      - Currencies
+  /currencies_with_date:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Request body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.RequestCurrencyByDateDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.ResponseCurrencyByDateDTO'
+      tags:
+      - Currencies
+  /ping:
+    get:
+      description: Responds with a "pong" message
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Ping the server
+      tags:
+      - Ping
+swagger: "2.0"

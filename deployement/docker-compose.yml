@@ -1,0 +1,25 @@
+services:
+  currencies.db:
+    image: postgres:14-alpine
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=currenciesdbdata
+    volumes:
+      - currenciesdbdata:/var/lib/postgresql/data/
+    ports:
+      - "5432:5432"
+    restart: on-failure
+
+  app:
+    image: docker.io/library/currency:latest
+    ports:
+      - "8080:8080"
+    volumes:
+      - ".env/:/app/.env"
+    depends_on:
+      - currencies.db
+    restart: on-failure
+
+volumes:
+  currenciesdbdata:
