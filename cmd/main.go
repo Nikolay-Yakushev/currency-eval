@@ -33,7 +33,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to launch app logger %v", err)
 	}
-	defer logger.Sync()
+	defer logger.Sync() //nolint
 
 	ctx, cancel := signal.NotifyContext(
 		context.Background(),
@@ -50,6 +50,9 @@ func main() {
 		log.Fatalf("Failed to launch pg repository %v", err)
 	}
 	currencyUc, err := currency.NewCurrencyUseCase(logger.Named("currencyUC"), pgRepository)
+	if err != nil {
+		log.Fatalf("Failed to launch uc %v", err)
+	}
 	httpController, err := http.NewController(ctx, logger, conf, currencyUc)
 	if err != nil {
 		log.Fatalf("Failed to launch app logger %v", err)
@@ -79,5 +82,5 @@ func main() {
 
 	<-ctx.Done()
 	done <- true
-	httpController.Stop(ctx)
+	httpController.Stop(ctx) //nolint
 }

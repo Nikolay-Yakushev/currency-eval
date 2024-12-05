@@ -1,0 +1,31 @@
+version: '3'
+
+tasks:
+  build:
+    cmds:
+      - go build -o build/currency-go cmd/main.go
+    desc: Build the Go project.
+
+  lint:
+    cmds:
+      - golangci-lint run
+    desc: Run linting.
+
+  run:
+    cmds:
+      - go run cmd/main.go
+    desc: Run the application.
+
+  tidy:
+    cmds:
+      - go mod tidy
+    desc: Clean up dependencies.
+
+  docker-build:
+    desc: Build the Docker image with a custom tag.
+    vars:
+      tag:
+        '{{.tag | default "latest"}}'
+    cmds:
+      - sudo docker build -t currency-eval:{{.tag}} .
+
