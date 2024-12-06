@@ -6,6 +6,6 @@ import (
 )
 
 type CurrencyUseCase interface {
-	GetExchangePairRate(ctx context.Context, dto dto.RequestCurrencyPairDTO) (*dto.ResponseCurrencyPairDTO, error)
-	GetCurrentExchangeRateByDate(ctx context.Context, dto dto.RequestCurrencyByDateDTO) (*dto.ResponseCurrencyByDateDTO, error)
+	GetExchangePairRate(ctx context.Context, d dto.UseCaseRequestCurrencyPairDTO) (dto.UseCaseResponseCurrencyPairDTO, error)
+	GetCurrentExchangeRateByDate(ctx context.Context, d dto.UseCaseRequestCurrencyByDateDTO) (dto.UseCaseResponseCurrencyByDateDTO, error)
 }
