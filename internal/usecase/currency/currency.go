@@ -10,34 +10,33 @@ import (
 )
 
 type UseCase struct {
-	logger     *zap.Logger
-	repository repository.DatabaseRepository
+	logger             *zap.Logger
+	currencyRepository repository.CurrencyRepository
 }
 
-func NewCurrencyUseCase(logger *zap.Logger, repository repository.DatabaseRepository) (*UseCase, error) {
+func NewCurrencyUseCase(logger *zap.Logger, repository repository.CurrencyRepository) (*UseCase, error) {
 	return &UseCase{
-		logger:     logger,
-		repository: repository,
+		logger:             logger,
+		currencyRepository: repository,
 	}, nil
 }
 
 func (uc *UseCase) GetCurrentExchangeRateByDate(ctx context.Context, d dto.RequestCurrencyByDateDTO) (*dto.ResponseCurrencyByDateDTO, error) {
-	models, err := uc.repository.Get(ctx, d.EffectiveDate)
+	models, err := uc.currencyRepository.Get(ctx, d.EffectiveDate)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch data in useCase level. Reason: %v", err)
+		return nil, fmt.Errorf("failed to fetch data in useCase level. Reason: %w", err)
 	}
 
-	if len(*models) == 0 {
+	if len(models) == 0 {
 		return nil, fmt.Errorf("no currency data available for the specified date")
 	}
 
 	var (
-		usdValue          float64 = 1 // assuming it always equal to 1
 		baseCurrencyValue float64
 		UpdatedAt         time.Time
 	)
 
-	for _, currency := range *models {
+	for _, currency := range models {
 		if UpdatedAt.IsZero() {
 			UpdatedAt = currency.Date
 		}
@@ -50,13 +49,14 @@ func (uc *UseCase) GetCurrentExchangeRateByDate(ctx context.Context, d dto.Reque
 	if baseCurrencyValue == 0 {
 		return nil, fmt.Errorf("base currency %s not found in the data", d.BaseCurrency)
 	}
+	usdValue := 1.0 // assuming it always equal to 1
 
 	if d.BaseCurrency != "USD" {
 		baseCurrencyValue /= usdValue
 	}
 
 	calculatedCurrencies := make(map[string]float64)
-	for _, currency := range *models {
+	for _, currency := range models {
 		convertedValue := (currency.Value / usdValue) / baseCurrencyValue
 		calculatedCurrencies[currency.Name] = convertedValue
 	}
@@ -70,22 +70,21 @@ func (uc *UseCase) GetCurrentExchangeRateByDate(ctx context.Context, d dto.Reque
 }
 
 func (uc *UseCase) GetExchangePairRate(ctx context.Context, d dto.RequestCurrencyPairDTO) (*dto.ResponseCurrencyPairDTO, error) {
-	models, err := uc.repository.Get(ctx, time.Time{})
+	models, err := uc.currencyRepository.Get(ctx, time.Time{})
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch data in useCase level. Reason: %v", err)
+		return nil, fmt.Errorf("failed to fetch data in useCase level. Reason: %w", err)
 	}
-	if len(*models) == 0 {
+	if len(models) == 0 {
 		return nil, fmt.Errorf("no currency data available")
 	}
 
 	var (
-		usdValue            float64 = 1 // assuming it always equal to 1
 		updatedAt           time.Time
 		baseCurrencyValue   float64
 		targetCurrencyValue float64
 	)
 
-	for _, currency := range *models {
+	for _, currency := range models {
 		if updatedAt.IsZero() {
 			updatedAt = currency.Date
 		}
@@ -107,6 +106,8 @@ func (uc *UseCase) GetExchangePairRate(ctx context.Context, d dto.RequestCurrenc
 	if targetCurrencyValue == 0 {
 		return nil, fmt.Errorf("no data available for the specified target currency")
 	}
+
+	usdValue := 1.0 // assuming it always equal to 1
 
 	if d.BaseCurrency != "USD" {
 		baseCurrencyValue /= usdValue

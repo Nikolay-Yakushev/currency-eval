@@ -1,18 +1,11 @@
-package config
+package main
 
 import (
 	"fmt"
 	"github.com/spf13/viper"
 )
 
-// Todo inner mapping to a struct
-type RestApiConfig struct {
-	RestApiHost string `mapstructure:"API_HOST"`
-	RestApiPort int    `mapstructure:"API_PORT"`
-}
-
 type Config struct {
-	RestApiPort           int    `mapstructure:"REST_API_PORT"`
 	LogLevel              string `mapstructure:"LOG_LEVEL"`
 	CurrencyServiceApiKey string `mapstructure:"CURRENCY_SERVICE_API_KEY"`
 	PostgresHost          string `mapstructure:"POSTGRES_HOST"`
@@ -20,7 +13,7 @@ type Config struct {
 	PostgresPassword      string `mapstructure:"POSTGRES_PASSWORD"`
 	PostgresDB            string `mapstructure:"POSTGRES_DB"`
 	PostgresPort          int    `mapstructure:"POSTGRES_PORT"`
-	//RestConfig RestApiConfig `mapstructure:"REST"`
+	RestApiPort           int    `mapstructure:"POSTGRES_PORT"`
 }
 
 func NewConfig(path string) (Config, error) {

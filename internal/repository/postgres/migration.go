@@ -1,7 +1,6 @@
-package pg
+package postgres
 
 import (
-	"currency_eval/internal/config"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -12,25 +11,25 @@ import (
 	"path/filepath"
 )
 
-func Migrate(db *sql.DB, cfg config.Config, logger *zap.Logger) error {
+func Migrate(db *sql.DB, cfg Config, logger *zap.Logger) error {
 	driver, err := postgres.WithInstance(db, &postgres.Config{})
 	if err != nil {
-		return fmt.Errorf("failed to get pg driver %v", err)
+		return fmt.Errorf("failed to get postgres driver %w", err)
 	}
 	absPath, _ := filepath.Abs(".")
 
 	logger.Debug("Current working directory", zap.String("path", absPath))
 	m, err := migrate.NewWithDatabaseInstance(
-		"file://"+absPath+"/internal/repository/pg/migrations",
+		"file://"+absPath+"/internal/repository/postgres/migrations",
 		cfg.PostgresDB,
 		driver,
 	)
 	if err != nil {
-		return fmt.Errorf("failed to get migrate instance %v", err)
+		return fmt.Errorf("failed to get migrate instance %w", err)
 	}
 
 	if err := m.Up(); err != nil && !errors.Is(err, migrate.ErrNoChange) {
-		return fmt.Errorf("failed to migrate %v", err)
+		return fmt.Errorf("failed to migrate %w", err)
 	}
 
 	return nil

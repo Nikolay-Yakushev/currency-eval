@@ -18,7 +18,7 @@ type Result struct {
 	Rates map[string]string `json:"rates"`
 }
 
-func FetchCurrentCurrencies(ctx context.Context, apiKey string, repo repository.DatabaseRepository) error {
+func FetchCurrentCurrencies(ctx context.Context, apiKey string, repo repository.CurrencyRepository) error {
 	requestURL := fmt.Sprintf("https://api.currencyfreaks.com/v2.0/rates/latest?apikey=%s", apiKey)
 	resp, err := http.Get(requestURL)
 	if err != nil {
@@ -67,7 +67,7 @@ func FetchCurrentCurrencies(ctx context.Context, apiKey string, repo repository.
 		Date:  parsedDate,
 	}
 	currencies = append(currencies, baseCurrency)
-	if err := repo.Update(ctx, &currencies); err != nil {
+	if err := repo.Update(ctx, currencies); err != nil {
 		return fmt.Errorf("failed to insert data. Reason %v", err)
 	}
 	return nil
