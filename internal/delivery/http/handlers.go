@@ -23,7 +23,7 @@ func (c *Controller) Pair(ctx *fiber.Ctx) error {
 
 	ucReq := dto.UseCaseRequestCurrencyPairDTO{
 		BaseCurrency:   request.BaseCurrency,
-		TargetCurrency: request.BaseCurrency,
+		TargetCurrency: request.TargetCurrency,
 	}
 	res, err := c.CurrencyUc.GetExchangePairRate(c.ctx, ucReq.ToUpperCase())
 	if err != nil {

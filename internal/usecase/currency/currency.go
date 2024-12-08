@@ -92,6 +92,13 @@ func (uc *UseCase) GetExchangePairRate(ctx context.Context, d dto.UseCaseRequest
 		if updatedAt.IsZero() {
 			updatedAt = currency.Date
 		}
+
+		if d.BaseCurrency == d.TargetCurrency {
+			baseCurrencyValue = 1.0
+			targetCurrencyValue = 1.0
+			break
+		}
+
 		switch currency.Name {
 		case d.BaseCurrency:
 			baseCurrencyValue = currency.Value
