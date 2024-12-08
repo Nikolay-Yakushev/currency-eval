@@ -23,7 +23,7 @@ func main() {
 	absPath, _ := filepath.Abs(".")
 	log.Println("Current working directory", zap.String("path", absPath))
 
-	conf, err := NewConfig(".")
+	conf, err := NewConf(".")
 	if err != nil {
 		log.Fatalf("Failed to launch app config %v", err)
 	}

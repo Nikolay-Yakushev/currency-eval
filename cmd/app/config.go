@@ -13,10 +13,10 @@ type Config struct {
 	PostgresPassword      string `mapstructure:"POSTGRES_PASSWORD"`
 	PostgresDB            string `mapstructure:"POSTGRES_DB"`
 	PostgresPort          int    `mapstructure:"POSTGRES_PORT"`
-	RestApiPort           int    `mapstructure:"POSTGRES_PORT"`
+	RestApiPort           int    `mapstructure:"REST_API_PORT"`
 }
 
-func NewConfig(path string) (Config, error) {
+func NewConf(path string) (Config, error) {
 	var (
 		err    error
 		config Config
