@@ -63,7 +63,6 @@ func TestGetCurrentExchangeRateByDate(t *testing.T) {
 	mockRepo.EXPECT().Get(context.Background(), mockDate).Return(mockModels, nil).Times(3)
 	mockRepo.EXPECT().Get(context.Background(), mockDate).Return(nil, errors.New("database error")).Times(1)
 
-	// Set up the use case
 	logger, err := zap.NewDevelopment()
 	if err != nil {
 		panic(err)
@@ -76,7 +75,7 @@ func TestGetCurrentExchangeRateByDate(t *testing.T) {
 	testCases := []struct {
 		name        string
 		request     dto.UseCaseRequestCurrencyByDateDTO
-		expected    map[string]float64
+		expected    *dto.UseCaseResponseCurrencyByDateDTO
 		expectError bool
 	}{
 		{
@@ -85,9 +84,14 @@ func TestGetCurrentExchangeRateByDate(t *testing.T) {
 				BaseCurrency:  "USD",
 				EffectiveDate: mockDate,
 			},
-			expected: map[string]float64{
-				"EUR": 0.85,
-				"JPY": 110.0,
+			expected: &dto.UseCaseResponseCurrencyByDateDTO{
+				UpdatedAt:         mockDate,
+				BaseCurrency:      "USD",
+				BaseCurrencyValue: 1.0,
+				Currencies: map[string]float64{
+					"EUR": 0.85,
+					"JPY": 110.0,
+				},
 			},
 			expectError: false,
 		},
@@ -97,9 +101,14 @@ func TestGetCurrentExchangeRateByDate(t *testing.T) {
 				BaseCurrency:  "EUR",
 				EffectiveDate: mockDate,
 			},
-			expected: map[string]float64{
-				"USD": 1.18,
-				"JPY": 129.41,
+			expected: &dto.UseCaseResponseCurrencyByDateDTO{
+				UpdatedAt:         mockDate,
+				BaseCurrency:      "EUR",
+				BaseCurrencyValue: 1.0,
+				Currencies: map[string]float64{
+					"USD": 1.18,
+					"JPY": 129.41,
+				},
 			},
 			expectError: false,
 		},
@@ -130,14 +139,86 @@ func TestGetCurrentExchangeRateByDate(t *testing.T) {
 				assert.Error(t, err)
 			} else {
 				assert.NoError(t, err)
-				assert.Equal(t, tc.request.BaseCurrency, response.BaseCurrency)
-				assert.Equal(t, 1.0, response.BaseCurrencyValue)
-				for currency, expectedValue := range tc.expected {
+				assert.Equal(t, tc.expected.BaseCurrency, response.BaseCurrency)
+				assert.Equal(t, tc.expected.BaseCurrencyValue, response.BaseCurrencyValue)
+				for currency, expectedValue := range tc.expected.Currencies {
 					assert.Contains(t, response.Currencies, currency)
 					actualValue := response.Currencies[currency]
 					assert.True(t, floatsAreEqual(expectedValue, actualValue, 1e-2),
 						"Expected value %.6f, got %.6f for currency %s", expectedValue, actualValue, currency)
 				}
+			}
+		})
+	}
+}
+
+func TestGetExchangePairRate(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	mockDate := time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)
+
+	mockRepo := mock.NewMockCurrencyRepository(ctrl)
+
+	mockModels := genTestData(mockDate)
+	mockRepo.EXPECT().Get(context.Background(), time.Time{}).Return(mockModels, nil).Times(1)
+	mockRepo.EXPECT().Get(context.Background(), time.Time{}).Return(nil, errors.New("database error")).Times(1)
+	logger, err := zap.NewDevelopment()
+	if err != nil {
+		panic(err)
+	}
+	uc, err := NewCurrencyUseCase(logger, mockRepo)
+	if err != nil {
+		panic(err)
+	}
+
+	testCases := []struct {
+		name        string
+		request     dto.UseCaseRequestCurrencyPairDTO
+		expected    *dto.UseCaseResponseCurrencyPairDTO
+		expectError bool
+	}{
+		{
+			name: "Base USD",
+			request: dto.UseCaseRequestCurrencyPairDTO{
+				BaseCurrency:   "USD",
+				TargetCurrency: "EUR",
+			},
+			expected: &dto.UseCaseResponseCurrencyPairDTO{
+				BaseCurrency:        "USD",
+				BaseCurrencyValue:   1.0,
+				TargetCurrency:      "EUR",
+				TargetCurrencyValue: 0.85,
+				UpdateAt:            mockDate,
+			},
+			expectError: false,
+		},
+		{
+			name: "Shit Base Currency",
+			request: dto.UseCaseRequestCurrencyPairDTO{
+				BaseCurrency:   "Shit",
+				TargetCurrency: "EUR",
+			},
+			expected: &dto.UseCaseResponseCurrencyPairDTO{
+				BaseCurrency:        "USD",
+				BaseCurrencyValue:   1.0,
+				TargetCurrency:      "EUR",
+				TargetCurrencyValue: 0.85,
+				UpdateAt:            mockDate,
+			},
+			expectError: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			response, err := uc.GetExchangePairRate(context.Background(), tc.request)
+			if tc.expectError {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tc.expected.BaseCurrency, response.BaseCurrency)
+				assert.Equal(t, tc.expected.BaseCurrencyValue, response.BaseCurrencyValue)
+				assert.Equal(t, tc.expected.TargetCurrencyValue, response.TargetCurrencyValue)
+				assert.Equal(t, tc.expected.UpdateAt, response.UpdateAt)
 			}
 		})
 	}
