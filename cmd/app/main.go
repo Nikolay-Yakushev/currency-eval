@@ -21,17 +21,21 @@ import (
 // @version 1.0
 func main() {
 	absPath, _ := filepath.Abs(".")
-	log.Println("Current working directory", zap.String("path", absPath))
+	log.Println("current working directory", zap.String("path", absPath))
 
 	conf, err := NewConf(absPath)
 	if err != nil {
-		log.Fatalf("Failed to launch app config %v", err)
+		log.Fatalf("failed to launch app config %v", err)
 	}
 	logger, err := appLogger.NewLogger(conf.LogLevel)
 	if err != nil {
 		log.Fatalf("Failed to launch app logger %v", err)
 	}
-	defer logger.Sync() //nolint
+	defer func() {
+		if err := logger.Sync(); err != nil {
+			log.Fatalf("failed to Sync logger %v", err)
+		}
+	}()
 
 	ctx, cancel := signal.NotifyContext(
 		context.Background(),
@@ -91,5 +95,7 @@ func main() {
 	}
 
 	<-ctx.Done()
-	HTTPController.Stop(ctx) //nolint
+	if err := HTTPController.Stop(ctx); err != nil {
+		logger.Error("failed to stop app gracefully", zap.Error(err))
+	}
 }

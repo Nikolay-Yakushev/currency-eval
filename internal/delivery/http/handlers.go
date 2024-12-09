@@ -12,19 +12,16 @@ import (
 // @Success 200 {object} dto.ControllerResponseCurrencyPair
 // @Router /currencies [post]
 func (c *Controller) Pair(ctx *fiber.Ctx) error {
-	var request dto.ControllerRequestCurrencyPair
+	var req dto.ControllerRequestCurrencyPair
 
-	if err := ctx.BodyParser(&request); err != nil {
+	if err := ctx.BodyParser(&req); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error":   "Invalid request body",
 			"details": err.Error(),
 		})
 	}
 
-	ucReq := dto.UseCaseRequestCurrencyPairDTO{
-		BaseCurrency:   request.BaseCurrency,
-		TargetCurrency: request.TargetCurrency,
-	}
+	ucReq := dto.UseCaseRequestCurrencyPairDTO(req)
 	res, err := c.CurrencyUc.GetExchangePairRate(c.ctx, ucReq.ToUpperCase())
 	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -32,13 +29,7 @@ func (c *Controller) Pair(ctx *fiber.Ctx) error {
 			"details": err.Error(),
 		})
 	}
-	controllerResp := dto.ControllerResponseCurrencyPair{
-		BaseCurrency:        res.BaseCurrency,
-		BaseCurrencyValue:   res.BaseCurrencyValue,
-		TargetCurrency:      res.TargetCurrency,
-		TargetCurrencyValue: res.TargetCurrencyValue,
-		UpdateAt:            res.UpdateAt,
-	}
+	controllerResp := dto.ControllerResponseCurrencyPair(res)
 
 	return ctx.Status(fiber.StatusOK).JSON(controllerResp)
 }
@@ -58,10 +49,7 @@ func (c *Controller) DatePair(ctx *fiber.Ctx) error {
 			"details": err.Error(),
 		})
 	}
-	ucReq := dto.UseCaseRequestCurrencyByDateDTO{
-		BaseCurrency:  r.BaseCurrency,
-		EffectiveDate: r.EffectiveDate,
-	}
+	ucReq := dto.UseCaseRequestCurrencyByDateDTO(r)
 
 	res, err := c.CurrencyUc.GetCurrentExchangeRateByDate(c.ctx, ucReq.ToUpperCase())
 	if err != nil {
@@ -70,12 +58,7 @@ func (c *Controller) DatePair(ctx *fiber.Ctx) error {
 			"details": err.Error(),
 		})
 	}
-	controllerRes := dto.ControllerResponseCurrencyByDateDTO{
-		BaseCurrencyValue: res.BaseCurrencyValue,
-		BaseCurrency:      res.BaseCurrency,
-		UpdatedAt:         res.UpdatedAt,
-		Currencies:        res.Currencies,
-	}
+	controllerRes := dto.ControllerResponseCurrencyByDateDTO(res)
 
 	return ctx.Status(fiber.StatusOK).JSON(controllerRes)
 }

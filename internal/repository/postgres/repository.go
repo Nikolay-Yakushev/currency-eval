@@ -38,7 +38,7 @@ func NewCurrencyRepository(logger *zap.Logger, config Config) (*CurrencyReposito
 	return &repo, nil
 }
 
-func (pgr *CurrencyRepository) Get(ctx context.Context, date time.Time) ([]models.Currency, error) {
+func (curRepo *CurrencyRepository) Get(ctx context.Context, date time.Time) ([]models.Currency, error) {
 	var (
 		currency []models.Currency
 		query    string
@@ -52,21 +52,21 @@ func (pgr *CurrencyRepository) Get(ctx context.Context, date time.Time) ([]model
 		query = "SELECT name, value, date FROM currencies;"
 	}
 
-	err := pgr.conn.SelectContext(ctx, &currency, query, args...)
+	err := curRepo.conn.SelectContext(ctx, &currency, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch data from DB: %w", err)
 	}
 	return currency, nil
 }
 
-func (pgr *CurrencyRepository) Update(ctx context.Context, rates []models.Currency) error {
+func (curRepo *CurrencyRepository) Update(ctx context.Context, rates []models.Currency) error {
 	query := `
         INSERT INTO currencies (name, value, date)
         VALUES ($1, $2, $3)
         ON CONFLICT (name, date) DO NOTHING;
     `
 
-	tx, err := pgr.conn.BeginTxx(ctx, nil)
+	tx, err := curRepo.conn.BeginTxx(ctx, nil)
 	if err != nil {
 		return fmt.Errorf("failed to begin transaction: %w", err)
 	}
