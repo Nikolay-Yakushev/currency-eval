@@ -27,5 +27,10 @@ tasks:
       tag:
         '{{.tag | default "latest"}}'
     cmds:
-      - sudo docker build -t currency-eval:{{.tag}} .
+      - sudo docker build -t currency:{{.tag}} .
+
+  test:
+    desc: test usecases
+    cmds:
+      - go test ./...
 
