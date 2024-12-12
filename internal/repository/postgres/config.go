@@ -1,6 +1,9 @@
 package postgres
 
-import "fmt"
+import (
+	"fmt"
+	"time"
+)
 
 type Config struct {
 	PostgresHost     string
@@ -8,6 +11,9 @@ type Config struct {
 	PostgresPassword string
 	PostgresDB       string
 	PostgresPort     int
+	MaxOpenConns     int           // Max number of open connections
+	MaxIdleConns     int           // Max number of idle connections
+	ConnMaxLifetime  time.Duration // Connection maximum lifetime
 }
 
 func (c *Config) DSN() string {

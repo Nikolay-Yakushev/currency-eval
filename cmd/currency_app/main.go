@@ -53,6 +53,9 @@ func main() {
 		PostgresPassword: conf.PostgresPassword,
 		PostgresDB:       conf.PostgresDB,
 		PostgresPort:     conf.PostgresPort,
+		MaxOpenConns:     100,
+		MaxIdleConns:     10,
+		ConnMaxLifetime:  time.Second * 30,
 	}
 
 	currencyRepository, err := postgresCurrencyRepo.NewCurrencyRepository(logger.Named("postgresRepo"), pgConf)

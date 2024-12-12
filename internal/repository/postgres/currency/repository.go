@@ -17,6 +17,15 @@ type PostgresCurrencyRepository struct {
 	cfg    postgres.Config
 }
 
+func LogDBSettings(db *sqlx.DB, logger *zap.Logger) {
+	stats := db.Stats()
+
+	fmt.Printf("Max Open Connections: %d\n", stats.MaxOpenConnections)
+	fmt.Printf("Current Open Connections: %d\n", stats.OpenConnections)
+	fmt.Printf("In Use Connections: %d\n", stats.InUse)
+	fmt.Printf("Idle Connections: %d\n", stats.Idle)
+}
+
 func NewCurrencyRepository(logger *zap.Logger, config postgres.Config) (*PostgresCurrencyRepository, error) {
 	var dsn = config.DSN()
 
@@ -26,6 +35,11 @@ func NewCurrencyRepository(logger *zap.Logger, config postgres.Config) (*Postgre
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to postgres currency repository, %w", err)
 	}
+
+	db.SetMaxOpenConns(config.MaxOpenConns)
+	db.SetMaxIdleConns(config.MaxIdleConns)
+	db.SetConnMaxLifetime(config.ConnMaxLifetime)
+	LogDBSettings(db, logger)
 
 	if err := postgres.Migrate(db.DB, config, logger); err != nil {
 		return nil, fmt.Errorf("failed to run migrations, %w", err)
