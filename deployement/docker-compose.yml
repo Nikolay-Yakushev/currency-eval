@@ -1,3 +1,9 @@
+version: '3.9'
+
+networks:
+  currency_network:
+    driver: bridge
+
 services:
   currencies.db:
     image: postgres:14-alpine
@@ -5,11 +11,29 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=currenciesdbdata
-    volumes:
-      - currenciesdbdata:/var/lib/postgresql/data/
     ports:
       - "5432:5432"
     restart: on-failure
+    networks:
+      - currency_network
+
+  pgbouncer:
+    image: edoburu/pgbouncer:latest
+    environment:
+      - DATABASES=currenciesdbdata=postgres://postgres:postgres@currencies.db:5432/currenciesdbdata
+      - POOL_MODE=session
+      - MAX_CLIENT_CONN=1000
+      - DEFAULT_POOL_SIZE=100
+    volumes:
+      - ./pgbouncer-userlist.txt:/etc/pgbouncer/userlist.txt
+      - ./pgbouncer.ini:/etc/pgbouncer/pgbouncer.ini
+    ports:
+      - "6432:6432"
+    depends_on:
+      - currencies.db
+    restart: on-failure
+    networks:
+      - currency_network
 
   app:
     image: docker.io/library/currency:latest
@@ -19,7 +43,7 @@ services:
       - ".env/:/currency_app/.env"
     depends_on:
       - currencies.db
+      - pgbouncer
     restart: on-failure
-
-volumes:
-  currenciesdbdata:
+    networks:
+      - currency_network
