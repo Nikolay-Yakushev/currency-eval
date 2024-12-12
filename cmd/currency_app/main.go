@@ -6,7 +6,8 @@ import (
 	_ "currency_eval/internal/docs"
 	appLogger "currency_eval/internal/pkg/logger"
 	"currency_eval/internal/repository/postgres"
-	"currency_eval/internal/usecase/currency"
+	postgresCurrencyRepo "currency_eval/internal/repository/postgres/currency"
+	currencyUsecase "currency_eval/internal/usecase/currency"
 	"go.uber.org/zap"
 	"log"
 	"os"
@@ -24,11 +25,11 @@ func main() {
 
 	conf, err := NewConf(absPath)
 	if err != nil {
-		log.Fatalf("failed to launch app config %v", err)
+		log.Fatalf("failed to launch currency_app config %v", err)
 	}
 	logger, err := appLogger.NewLogger(conf.LogLevel)
 	if err != nil {
-		log.Fatalf("Failed to launch app logger %v", err)
+		log.Fatalf("Failed to launch currency_app logger %v", err)
 	}
 	defer func() {
 		if err := logger.Sync(); err != nil {
@@ -54,11 +55,11 @@ func main() {
 		PostgresPort:     conf.PostgresPort,
 	}
 
-	currencyRepository, err := postgres.NewCurrencyRepository(logger.Named("postgresRepo"), pgConf)
+	currencyRepository, err := postgresCurrencyRepo.NewCurrencyRepository(logger.Named("postgresRepo"), pgConf)
 	if err != nil {
 		logger.Fatal("failed to launch currency repository", zap.Error(err))
 	}
-	currencyUseCase, err := currency.NewCurrencyUseCase(
+	currencyUseCase, err := currencyUsecase.NewCurrencyUseCase(
 		logger.Named("currencyUC"), currencyRepository, conf.CurrencyServiceApiKey,
 	)
 	if err != nil {
@@ -70,19 +71,19 @@ func main() {
 
 	HTTPController, err := http.NewController(ctx, logger, htpConf, currencyUseCase)
 	if err != nil {
-		logger.Fatal("failed to initialize app http controller", zap.Error(err))
+		logger.Fatal("failed to initialize currency_app http controller", zap.Error(err))
 	}
 
 	ticker := time.NewTicker(12 * time.Hour)
 	defer ticker.Stop()
 
 	if err := HTTPController.Start(); err != nil {
-		logger.Fatal("failed to launch app http_controller", zap.Error(err))
+		logger.Fatal("failed to launch currency_app http_controller", zap.Error(err))
 	}
 
 	<-ctx.Done()
 	if err := HTTPController.Stop(ctx); err != nil {
-		logger.Error("failed to stop app gracefully", zap.Error(err))
+		logger.Error("failed to stop currency_app gracefully", zap.Error(err))
 	}
 	currencyUseCase.Stop()
 }

@@ -3,7 +3,7 @@ WORKDIR /app
 
 COPY . .
 RUN go mod download
-RUN go build -o main /app/cmd/app/main.go /app/cmd/app/config.go
+RUN go build -o main /currency_app/cmd/currency_app/main.go /currency_app/cmd/currency_app/config.go
 
 
 FROM alpine:latest

@@ -16,7 +16,7 @@ services:
     ports:
       - "8080:8080"
     volumes:
-      - ".env/:/app/.env"
+      - ".env/:/currency_app/.env"
     depends_on:
       - currencies.db
     restart: on-failure

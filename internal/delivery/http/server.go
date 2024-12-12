@@ -29,7 +29,7 @@ func (c *Controller) Start() error {
 	c.initRoutes(c.app)
 	go func() {
 		stringifyPort := fmt.Sprintf(":%d", c.cfg.RestApiPort)
-		c.logger.Info("starting fiber app")
+		c.logger.Info("starting fiber currency_app")
 		if err = c.app.Listen(stringifyPort); err != nil {
 			c.logger.Error("failed to start  HTTPController", zap.Error(err))
 		}

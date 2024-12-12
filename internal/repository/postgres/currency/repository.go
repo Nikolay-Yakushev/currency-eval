@@ -1,8 +1,9 @@
-package postgres
+package currency
 
 import (
 	"context"
 	"currency_eval/internal/models"
+	"currency_eval/internal/repository/postgres"
 	"fmt"
 	_ "github.com/jackc/pgx/stdlib"
 	"github.com/jmoiron/sqlx"
@@ -10,13 +11,13 @@ import (
 	"time"
 )
 
-type CurrencyRepository struct {
+type PostgresCurrencyRepository struct {
 	logger *zap.Logger
 	conn   *sqlx.DB
-	cfg    Config
+	cfg    postgres.Config
 }
 
-func NewCurrencyRepository(logger *zap.Logger, config Config) (*CurrencyRepository, error) {
+func NewCurrencyRepository(logger *zap.Logger, config postgres.Config) (*PostgresCurrencyRepository, error) {
 	var dsn = config.DSN()
 
 	logger.Debug("Postgres DSN", zap.String("dsn", dsn))
@@ -26,11 +27,11 @@ func NewCurrencyRepository(logger *zap.Logger, config Config) (*CurrencyReposito
 		return nil, fmt.Errorf("failed to connect to postgres currency repository, %w", err)
 	}
 
-	if err := Migrate(db.DB, config, logger); err != nil {
+	if err := postgres.Migrate(db.DB, config, logger); err != nil {
 		return nil, fmt.Errorf("failed to run migrations, %w", err)
 	}
 
-	repo := CurrencyRepository{
+	repo := PostgresCurrencyRepository{
 		logger: logger,
 		conn:   db,
 		cfg:    config,
@@ -38,7 +39,7 @@ func NewCurrencyRepository(logger *zap.Logger, config Config) (*CurrencyReposito
 	return &repo, nil
 }
 
-func (curRepo *CurrencyRepository) Get(ctx context.Context, date time.Time) ([]models.Currency, error) {
+func (curRepo *PostgresCurrencyRepository) Get(ctx context.Context, date time.Time) ([]models.Currency, error) {
 	var (
 		currency []models.Currency
 		query    string
@@ -59,7 +60,7 @@ func (curRepo *CurrencyRepository) Get(ctx context.Context, date time.Time) ([]m
 	return currency, nil
 }
 
-func (curRepo *CurrencyRepository) Update(ctx context.Context, rates []models.Currency) error {
+func (curRepo *PostgresCurrencyRepository) Update(ctx context.Context, rates []models.Currency) error {
 	query := `
         INSERT INTO currencies (name, value, date)
         VALUES ($1, $2, $3)
