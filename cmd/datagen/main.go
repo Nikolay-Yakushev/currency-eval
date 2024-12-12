@@ -184,22 +184,18 @@ func generateData(startDate, endDate time.Time, repo repository.CurrencyReposito
 		close(genDataChannel)
 	}()
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		eg, egCtx := errgroup.WithContext(context.Background())
-		eg.SetLimit(100)
-		for v := range genDataChannel {
-			v := v
-			eg.Go(func() error {
-				return parseAndUpdate(v, repo, egCtx)
-			})
-		}
+	eg, egCtx := errgroup.WithContext(context.Background())
+	eg.SetLimit(100)
+	for v := range genDataChannel {
+		v := v
+		eg.Go(func() error {
+			return parseAndUpdate(v, repo, egCtx)
+		})
+	}
 
-		if err := eg.Wait(); err != nil {
-			fmt.Printf("error during update: %v\n", err)
-		}
-	}()
+	if err := eg.Wait(); err != nil {
+		fmt.Printf("error during update: %v\n", err)
+	}
 
 	wg.Wait()
 	fmt.Println("all updated")
